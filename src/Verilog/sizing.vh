@@ -137,4 +137,16 @@ begin
 end
 endfunction
 
+// Compute multiple of 8 closest to the given number
+function automatic integer closest_8_multiple;
+    input integer n;
+begin
+    `SEQUENTIAL_ASSERT(n > 0, 
+        "The argument must be positive!")
+    closest_8_multiple = 8;
+    while (n > closest_8_multiple)
+        closest_8_multiple = closest_8_multiple + 8;
+end
+endfunction
+
 `endif
