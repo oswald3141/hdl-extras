@@ -128,8 +128,6 @@ endfunction
 function automatic integer signed_size;
     input integer n;
 begin
-    `SEQUENTIAL_ASSERT(n >= 0, 
-        "The argument must be non-negative!")
     if (n == 0)
         signed_size = 2;
     else if (n > 0)
