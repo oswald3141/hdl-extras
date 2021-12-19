@@ -1,49 +1,56 @@
 /*
-The implementation of synchronizing package from VHDL-extras in Verilog.
-
-This package provides a number of synchronizer components for managing
+This file provides a number of synchronizer modules for managing
 data transmission between clock domains.
 
-If you need to synchronize a vector of bits together you should use the
+If you need to synchronize a bus together you should use the
 handshake_synchronizer module. If you generate an array of bit_synchronizer
 modules instead, there is a risk that some bits will take longer than
 others and invalid values will appear at the outputs. This is particularly
-problematic if the vector represents a numeric value. bit_synchronizer can
+problematic if the bus represents a numeric value. bit_synchronizer can
 be used safely in an array only if you know the input signal comes from an
 isochronous domain (same period, different phase).
+
+These modules are optimized for use with Xilinx Vivado. Attributes used in the
+modules are Vivado-specific. Other tool would just probably ignore them. The
+modules also may contain workarounds for some Vivado's bugs. If you intend to
+use a module defined here with different synthesis tool, it would be better to
+reimplement it.
+
+The code presented here is either inspired by VHDL-extras library or directly
+reimplements it in Verilog.
+https://github.com/kevinpt/vhdl-extras
 
 
 The code is distributed under The MIT License
 Copyright (c) 2021 Andrey Smolyakov
     (andreismolyakow 'at' gmail 'punto' com)
+Copyright (c) 2010 Kevin Thibedeau
+    (kevin 'period' thibedeau 'at' gmail 'punto' com)
 See LICENSE for the complete license text
 */
-
-`ifndef SYNCHRONIZING_H
-`define SYNCHRONIZING_H
 
 `include "assert.vh"
 
 // A basic synchronizer with a configurable number of stages
-module bit_synchronizer
+module bit_synchronizer_v
 #(
-    parameter
-    STAGES = 2,
-    RESET_ACTIVE_LEVEL = 1
+    parameter integer
+        STAGES = 2,
+    parameter [0:0]
+        RESET_ACTIVE_LEVEL = 1
 )
 (
-    input  Clock,
-    input  Reset,
-    input  Bit_in,
-    output Sync
+    input wire
+        Clock,
+        Reset,
+        Bit_in,
+    output wire
+        Sync
 );
     `ASSERT(STAGES >= 2,
-        "The number of the synchronization stages must exceed 2!")
-    `ASSERT(RESET_ACTIVE_LEVEL == 1 || RESET_ACTIVE_LEVEL == 0, 
-        "The reset value must be signle-bit!")
+        "The number of the synchronization stages must be at least 2!")
 
     (* ASYNC_REG = "TRUE" *) reg [0:STAGES-1] sr;
-    integer i;
     
     always @ (posedge Clock) begin
         if (Reset == RESET_ACTIVE_LEVEL)
@@ -57,66 +64,77 @@ module bit_synchronizer
 endmodule
 
 // Synchronizer for generating a synchronized reset
-module reset_synchronizer
+module reset_synchronizer_v
 #(
-    parameter
-    STAGES = 2,            // Number of flip-flops in the synchronizer
-    RESET_ACTIVE_LEVEL = 1 // Asynch. reset control level
+    parameter integer
+        STAGES = 2,            // Number of flip-flops in the synchronizer
+    parameter [0:0]
+        RESET_ACTIVE_LEVEL = 1 // Asynch. reset control level
 )
 (
-    input  Clock,     // System clock
-    input  Reset,     // Asynchronous reset
-    output Sync_reset // Synchronized reset
+    input
+        Clock,     // System clock
+        Reset,     // Asynchronous reset
+    output
+        Sync_reset // Synchronized reset
 );
 
     `ASSERT(STAGES >= 2,
-        "The number of the synchronization stages must exceed 2!")
-    `ASSERT(RESET_ACTIVE_LEVEL == 1 || RESET_ACTIVE_LEVEL == 0, 
-        "The reset value must be signle-bit!")
+        "The number of the synchronization stages must be at least 2!")
 
     (* dont_touch = "yes", shreg_extract = "no" *) reg [0:STAGES-1] sr;
-    integer i;
+
+    `define _RESET_SYNCHER_PROCESS_BODY \
+        begin : sync \
+        integer i; \
+        if (Reset == RESET_ACTIVE_LEVEL) \
+            for (i = 0; i < STAGES; i = i + 1) \
+                sr[i] <= RESET_ACTIVE_LEVEL; \
+        else \
+            sr <= {!RESET_ACTIVE_LEVEL, sr[0:STAGES-1-1]}; \
+        end : sync
     
-    always @ (posedge Clock or posedge Reset) begin
-        if (Reset == RESET_ACTIVE_LEVEL)
-            for (i = 0; i < STAGES; i = i + 1)
-                sr[i] <= RESET_ACTIVE_LEVEL;
+    generate
+        if(RESET_ACTIVE_LEVEL == 1)
+            always @ (posedge Clock or posedge Reset)
+                `_RESET_SYNCHER_PROCESS_BODY
         else
-            sr <= {!RESET_ACTIVE_LEVEL, sr[0:STAGES-1-1]};  
-    end
+            always @ (posedge Clock or negedge Reset)
+                `_RESET_SYNCHER_PROCESS_BODY
+    endgenerate
     
     assign Sync_reset = sr[STAGES-1];
-
 endmodule
 
 
 // A handshaking synchronizer for sending an array between clock domains
 // This uses the four-phase handshake protocol.
-module handshake_synchronizer
+module handshake_synchronizer_v
 #(
-    parameter
-    WORD_LENGTH = 0,
-    STAGES = 2,
-    RESET_ACTIVE_LEVEL = 1
+    parameter integer
+        WORD_LENGTH = 0,
+        STAGES = 2,
+    parameter [0:0]
+        RESET_ACTIVE_LEVEL = 1
 )
 (
-    input  Clock_tx,
-    input  Reset_tx,
-    input  Clock_rx,
-    input  Reset_rx,
-    input  [WORD_LENGTH-1:0] Tx_data,
-    input  Send_data,
-    output Sending,
-    output Data_sent,
-    output [WORD_LENGTH-1:0] Rx_data,
-    output New_data
+    input wire
+        Clock_tx,
+        Reset_tx,
+        Clock_rx,
+        Reset_rx,
+        [WORD_LENGTH-1:0] Tx_data,
+        Send_data,
+    output wire
+        Sending,
+        Data_sent,
+        [WORD_LENGTH-1:0] Rx_data,
+        New_data
 );
 
-    `ASSERT(WORD_LENGTH > 0,    "The value must be positive!")
+    `ASSERT(WORD_LENGTH > 0, "The value must be positive!")
     `ASSERT(STAGES >= 2,
-        "The number of the synchronization stages must exceed 2!")
-    `ASSERT(RESET_ACTIVE_LEVEL == 1 || RESET_ACTIVE_LEVEL == 0, 
-        "The reset value must be signle-bit!")
+        "The number of the synchronization stages must be at least 2!")
 
     wire ack_rx, ack_tx;
     reg prev_ack;
@@ -142,7 +160,7 @@ module handshake_synchronizer
 
     // Tx logic
     
-    bit_synchronizer #(
+    bit_synchronizer_v #(
         .STAGES(STAGES),
         .RESET_ACTIVE_LEVEL(RESET_ACTIVE_LEVEL)
     ) as (
@@ -216,7 +234,7 @@ module handshake_synchronizer
     
     // Rx logic
     
-    bit_synchronizer #(
+    bit_synchronizer_v #(
         .STAGES(STAGES),
         .RESET_ACTIVE_LEVEL(RESET_ACTIVE_LEVEL)
     ) rs (
@@ -245,5 +263,3 @@ module handshake_synchronizer
     end
 
 endmodule
-
-`endif
