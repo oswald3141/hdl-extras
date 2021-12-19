@@ -1,13 +1,9 @@
 /*
-The implementation of sizing package from VHDL-extras in Verilog.
-https://github.com/kevinpt/vhdl-extras
-
-This package provides functions used to compute integer approximations
-of logarithms. The primary use of these functions is to determine the
-size of arrays using the bit_size and encoding_size functions. When put to
-maximal use it is possible to create designs that eliminate hardcoded
-ranges and automatically resize their signals and variables by changing a
-few key constants or generics.
+This file provides functions used to compute integer approximations of
+logarithms. The primary use of these functions is to determine the size of
+arrays using the bit_size and encoding_size functions. When put to maximal
+use it is possible to create designs that eliminate hardcoded ranges and
+automatically resize their variables by changing a few key parameters.
 
 These functions can be used in most synthesizers to compute ranges for
 arrays. The core functionality is provided in the ceil_log and
@@ -15,9 +11,15 @@ floor_log subprograms. These compute the logarithm in any integer base.
 For convenenience, base-2 functions are also provided along with the array
 sizing functions.
 
-Notice, that SEQUENTIAL_ASSERT works only in sequential context (functions,
-always-blocks, etc.) It won't be executed if called in, e.g. localparam
-definition. Be careful with that.
+Additionaly, the file provides closest_8_multiple function calculating the
+multiple of 8 closest to the given number. It's useful for determining widths
+of AXI buses.
+
+This header is tool-independent.
+
+The code presented here is either inspired by VHDL-extras library or directly
+reimplements it in Verilog.
+https://github.com/kevinpt/vhdl-extras
 
 
 The code is distributed under The MIT License
