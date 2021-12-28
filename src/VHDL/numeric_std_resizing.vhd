@@ -8,13 +8,12 @@
 --# interfaces which show clearly how resizing should be performed (extending
 --# or truncating, from the left or from the right).
 --# 
---# The package implies, that the numbers ranges are defined with "downto".
---# The bit with the highest index is considered to be the most significant.
+--# The package considers the most significant bit to be the leftmost.
 --#
---# The package uses unresolved ports types (std_ulogic, std_ulogic_vector,
---# unresolved_signed,unresolved_unsigned). In VHDL-2008 their resolved
---# versions are defined as their subtypes. So you can safely use the functions
---# presented here with std_logic, std_logic_vector, signed and unsigned.
+--# The package uses unresolved numbers types (unresolved_signed, 
+--# unresolved_unsigned). In VHDL-2008 their resolved versions are defined as
+--# their subtypes. So you can safely use the functions presented here with
+--# signed and unsigned too.
 --#
 --# The code is distributed under The MIT License
 --# Copyright (c) 2021 Andrey Smolyakov
@@ -68,22 +67,34 @@ package body numeric_std_resizing is
                             extension : std_ulogic := '0')
                             return std_ulogic_vector is
 
-    variable v : std_ulogic_vector(new_size-1 downto 0);
+    variable v : std_ulogic_vector(s'high downto s'low); -- var to resize
+    variable r : std_ulogic_vector(new_size-1 downto 0); -- result
+    
+    alias sr : std_ulogic_vector(s'reverse_range) is s;
+    alias rr : std_ulogic_vector(r'reverse_range) is r;
   begin
+    -- v'range is downto regardless of s'range
+    v := sr when s'ascending else s;
+  
     case method is
       when truncate_LSBs =>
-        return s( s'left downto (s'left + 1 - new_size) );
+        r := v( v'left downto (v'left - (new_size - 1)) );
       when truncate_MSBs =>
-        return s( (s'right + new_size -1) downto s'right);
+        r := v( (v'right + (new_size - 1)) downto v'right);
       when extend_LSB   =>
-        v(v'high downto new_size - s'length) := s;
-        v(new_size - s'length - 1 downto 0) := (others => extension);
-        return v;
+        r(r'left downto (new_size - v'length)) := v;
+        r(r'left - v'length downto 0) := (others => extension);
       when extend_MSB   =>
-        v(new_size-1 downto s'high+1) := (others => extension);
-        v(s'high downto 0) := s;
-        return v;
+        r(r'left downto v'length) := (others => extension);
+        r(v'length-1 downto 0) := v;
     end case;
+    
+    -- Choose the same range as input
+    if s'ascending then
+        return rr;
+    else 
+        return r;
+    end if;
   end function;
   
   --## Resizizng function for unsigned number clearly stating how exactly the 
@@ -92,8 +103,6 @@ package body numeric_std_resizing is
                             new_size : positive;
                             method   : resize_method) return u_unsigned is
   begin
-    assert not s'ascending report "The package implies that the number range" &
-        " is defined with downto!" severity FAILURE;
     return u_unsigned(
       resize_explicit(std_ulogic_vector(s), new_size, method, '0'));
   end function;
@@ -105,13 +114,10 @@ package body numeric_std_resizing is
                             new_size : positive;
                             method : resize_method) return u_signed is
   begin
-    assert not s'ascending report "The package implies that the number range" &
-      " is defined with downto!" severity FAILURE;
-  
     case method is
       when extend_MSB   =>
         return u_signed(
-          resize_explicit(std_ulogic_vector(s), new_size, method, s(s'high)));
+          resize_explicit(std_ulogic_vector(s), new_size, method, s(s'left)));
       when others =>
         return u_signed(
           resize_explicit(std_ulogic_vector(s), new_size, method, '0'));
