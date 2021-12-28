@@ -16,6 +16,10 @@
 --# check whether the back conversion was correct or not. For the same reason
 --# from_sulv functions defined here can't check if the back conversion you ask
 --# for correct. So be careful with them.
+--# Generally, it's advisable to call "from_sulv" only for vectors that have
+--# been initially assigned by calling "to_sulv" and only with return type
+--# being the same as the input type of to_sulv. In any other case, pay special
+--# attention to the type correctness of your conversion.
 --# 
 --# Functions presented here are defined for unresolved arrays types only.
 --# However, due to the fact that common package defines arrays with resolved
