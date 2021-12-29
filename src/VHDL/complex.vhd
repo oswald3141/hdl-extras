@@ -7,6 +7,9 @@
 --# Represents complex numbers in the Cartesian form. Doesn't provide
 --# multiplication operator overload due to the complexity of this operation.
 --# One had better write a separate entity for that.
+--#
+--# The package implies that you set the same length of re and im fields in
+--# u_complex record.
 --# 
 --# The package also provides the definition of array of complex numbers.
 --# Additionaly, there are packing/unpacking and resizing functions simillar to
