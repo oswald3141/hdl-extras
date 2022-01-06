@@ -8,9 +8,8 @@ registers generating module.
 - `synchronizing_xilinx`: CDC modules (N flip-flop one-bit synchronizer, reset
 synchronizer, handshake bus synchronizer).
 
-The library does not provide `assert` and `packing` headers present in the
-Verilog implementation. You can use `if - else $error` pattern and
-`packed`/`unpacked` arrays with streaming operators instead.
+The library does not provide `assert` header present in the Verilog
+implementation. You can use `if - else $error` pattern and instead.
 
 ## Compilation
 You must compile all of the library's files into the main library of your tool
