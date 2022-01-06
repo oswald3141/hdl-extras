@@ -6,7 +6,16 @@
 --# synesis tool to infer a specific stype of shift registers implementation by
 --# setting ATTR_SRL_STYLE parameter to something other than "auto". If you
 --# don't want to constant the tool here, just leave ATTR_SRL_STYLE generic
---# constant unchanged.
+--# constant unchanged.  Vivado 2020.2 supports the following values for this
+--# attribute:
+--# - register: The tool does not infer an SRL, but instead only uses
+--#   registers.
+--# - srl: The tool infers an SRL without any registers before or after.
+--# - srl_reg: The tool infers an SRL and leaves one register after the SRL.
+--# - reg_srl: The tool infers an SRL and leaves one register before the SRL.
+--# - reg_srl_reg: The tool infers an SRL and leaves one register before and
+--#   one register after the SRL.
+--# - block: The tool infers the SRL inside a block RAM.
 --# 
 --# This package also provides configurable shift register components intended
 --# to be used as placeholders for register retiming during synthesis

@@ -10,7 +10,15 @@ pipeline stages is controlled with the PIPELINE_STAGES generic.
 fixed_delay_line_v is a simple delay line friedly to inferring SRL primitives.
 You can force the synthesis synesis tool to infer a specific stype of shift
 registers implementation by setting ATTR_SRL_STYLE parameter to something
-other than auto.
+other than auto. Vivado 2020.2 supports the following values for this
+attribute:
+- register: The tool does not infer an SRL, but instead only uses registers.
+- srl: The tool infers an SRL without any registers before or after.
+- srl_reg: The tool infers an SRL and leaves one register after the SRL.
+- reg_srl: The tool infers an SRL and leaves one register before the SRL.
+- reg_srl_reg: The tool infers an SRL and leaves one register before and one
+register after the SRL.
+- block: The tool infers the SRL inside a block RAM.
 
 dynamic_delay_line_v is similar to the fixed_delay_line_v. It allows you to
 access any register in the chain by its address. It doesn't support setting
