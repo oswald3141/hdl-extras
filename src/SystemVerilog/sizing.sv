@@ -39,7 +39,7 @@ function automatic int unsigned floor_log(int n, b);
     int unsigned residual = n,
                  log = 0;
                  
-     assert( n > 0 && b > 0) else
+     if( !(n > 0 && b > 0) )
         $error("Both arguments must be positive!");
     
     while (residual > (b - 1)) begin
@@ -56,7 +56,7 @@ function automatic int unsigned ceil_log(int n, b);
     int unsigned residual = n - 1,
                  log = 0;
                  
-     assert( n > 0 && b > 0) else
+     if ( !(n > 0 && b > 0) )
         $error("Both arguments must be positive!");
     
     while (residual > 0) begin
@@ -82,7 +82,7 @@ endfunction : ceil_log2
 // Compute the total number of bits needed
 // to represent a number in binary.
 function automatic int unsigned bit_size(int n);
-     assert( n >= 0 ) else
+     if( !(n >= 0) )
         $error("The argument must be non-negative!");
      
      return (n == 0) ? 1 : floor_log2(n) + 1;
@@ -91,7 +91,7 @@ endfunction : bit_size
 // Compute the number of bits needed to encode
 // n items.
 function automatic int unsigned encoding_size(int n);
-     assert( n > 0 ) else
+     if( !(n > 0) )
         $error("The argument must be positive!");
      
      return (n == 1) ? 1 : ceil_log2(n);
@@ -118,7 +118,7 @@ endfunction : signed_size
 function automatic int unsigned closest_8_multiple(int n);
     int unsigned mult = 8;
     
-     assert( n > 0 ) else
+     if( !(n > 0) )
         $error("The argument must be positive!");
     
     while (n > mult)
